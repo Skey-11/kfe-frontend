@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { api } from "../api";
-import { getUser } from "../auth";
+import { getUser,clearSession } from "../auth";
 import { useNavigate } from "react-router-dom";
 
 export default function Inventory() {
@@ -26,6 +26,13 @@ export default function Inventory() {
   useEffect(() => {
     load();
   }, []);
+
+
+    const logout = async () => {
+      clearSession();
+      await Swal.fire("Listo", "Sesión cerrada", "success");
+      nav("/login");
+    };
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -225,11 +232,11 @@ const reactivateProduct = async (p) => {
               onChange={(e) => setQ(e.target.value)}
             />
               <button
-    onClick={openCreate}
-    className="px-3 py-2 rounded-xl bg-black text-white hover:opacity-90"
-  >
-    Nuevo producto
-  </button>
+              onClick={openCreate}
+              className="px-3 py-2 rounded-xl bg-black text-white hover:opacity-90"
+            >
+              Nuevo producto
+            </button>
 
             <button
               onClick={load}
@@ -238,11 +245,23 @@ const reactivateProduct = async (p) => {
             >
               {loading ? "..." : "Recargar"}
             </button>
+            {user?.roles?.some((r) => ["admin"].includes(r)) && (
                 <button
       onClick={() => nav("/pos")}
       className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
     >
       Punto de venta
+    </button>)}
+                    
+    <button
+      onClick={() => nav("/reports")}
+      className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
+    >
+      Reportes
+    </button>
+
+      <button onClick={logout} className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100">
+      Salir
     </button>
           </div>
         </div>

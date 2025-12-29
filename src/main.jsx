@@ -14,12 +14,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+
         <Route
           path="/pos"
           element={
+            <RoleRoute allow={["cashier", "admin"]}
+            redirectTo="/inventory">
             <ProtectedRoute>
               <Pos />
             </ProtectedRoute>
+            </RoleRoute>
           }
         />
         <Route path="*" element={<Navigate to="/pos" replace />} />

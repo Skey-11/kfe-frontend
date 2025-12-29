@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { api } from "../api";
 import { useNavigate } from "react-router-dom";
+import {clearSession,getUser} from "../auth";
 import {
   BarChart,
   Bar,
@@ -22,7 +23,7 @@ function todayISO() {
 
 export default function Reports() {
   const nav = useNavigate();
-
+  const user = getUser();
   const [from, setFrom] = useState(todayISO());
   const [to, setTo] = useState(todayISO());
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,12 @@ export default function Reports() {
     const sum = sold.reduce((acc, x) => acc + Number(x.total_amount || 0), 0);
     return Number(sum.toFixed(2));
   }, [sold]);
+
+      const logout = async () => {
+        clearSession();
+        await Swal.fire("Listo", "Sesión cerrada", "success");
+        nav("/login");
+      };
 
   const run = async () => {
     if (!from || !to) return Swal.fire("Error", "Selecciona from y to", "warning");
@@ -108,13 +115,16 @@ export default function Reports() {
             >
               Inventario
             </button>
-
+            {user?.roles?.some((r) => ["admin"].includes(r)) && (
             <button
               onClick={() => nav("/pos")}
               className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
             >
               POS
-            </button>
+            </button>)}
+                <button onClick={logout} className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100">
+                salir
+              </button>
           </div>
         </div>
       </header>
