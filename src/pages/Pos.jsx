@@ -142,6 +142,14 @@ export default function Pos() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+              {user?.roles?.some((r) => ["manager", "admin"].includes(r)) && (
+    <button
+      onClick={() => nav("/inventory")}
+      className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
+    >
+      Inventario
+    </button>
+  )}
             <button
               onClick={loadProducts}
               className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"

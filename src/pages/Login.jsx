@@ -26,7 +26,13 @@ export default function Login() {
 
       if (!data?.token) throw new Error("Respuesta de login inválida");
 
-      setSession({ token: data.token, user: data.user });
+      setSession({
+        token: data.token,
+        user: {
+          username,
+          roles: data.roles || [],
+        },
+      });
       await Swal.fire("", "Sesión iniciada", "success");
       nav("/pos");
     } catch (err) {
