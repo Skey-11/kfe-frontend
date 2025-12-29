@@ -18,7 +18,10 @@ export default function Pos() {
     try {
       setLoadingProducts(true);
       const { data } = await api.get("/products");
-      setProducts(Array.isArray(data) ? data : []);
+      const onlyActive = (Array.isArray(data) ? data : []).filter(
+        (p) => Number(p.is_active) === 1
+      );
+      setProducts(onlyActive);
     } catch (e) {
       Swal.fire("Error", e?.response?.data?.message || "No se pudieron cargar productos", "error");
     } finally {

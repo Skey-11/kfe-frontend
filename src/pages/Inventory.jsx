@@ -10,7 +10,7 @@ export default function Inventory() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
-  
+
   const load = async () => {
     try {
       setLoading(true);
@@ -32,6 +32,113 @@ export default function Inventory() {
     if (!s) return items;
     return items.filter((p) => (p.name || "").toLowerCase().includes(s));
   }, [items, q]);
+
+  const openCreate = async () => {
+  const { value, isConfirmed } = await Swal.fire({
+    title: "Nuevo producto",
+    html: `
+      <div style="text-align:left;display:grid;gap:10px">
+        <label>Nombre</label>
+        <input id="cr_name" class="swal2-input" placeholder="Ej. Coca 600ml" />
+
+        <label>Precio</label>
+        <input id="cr_price" class="swal2-input" type="number" step="0.01" placeholder="Ej. 25" />
+
+        <label style="display:flex;gap:8px;align-items:center;margin-top:6px">
+          <input id="cr_track" type="checkbox" />
+          <span>Maneja inventario (track_stock)</span>
+        </label>
+
+        <div id="cr_stock_wrap" style="display:none">
+          <label>Stock</label>
+          <input id="cr_stock" class="swal2-input" type="number" step="1" placeholder="Ej. 10" />
+        </div>
+      </div>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: "Guardar",
+    cancelButtonText: "Cancelar",
+    didOpen: () => {
+      const chk = document.getElementById("cr_track");
+      const wrap = document.getElementById("cr_stock_wrap");
+      chk.addEventListener("change", () => {
+        wrap.style.display = chk.checked ? "block" : "none";
+      });
+    },
+    preConfirm: () => {
+      const name = document.getElementById("cr_name").value;
+      const price = document.getElementById("cr_price").value;
+      const track_stock = document.getElementById("cr_track").checked ? 1 : 0;
+      const stockEl = document.getElementById("cr_stock");
+      const stock = stockEl ? stockEl.value : undefined;
+      return { name, price, track_stock, stock };
+    },
+  });
+
+  if (!isConfirmed) return;
+
+  try {
+    const dto = {
+      name: value.name,
+      price: value.price,
+      is_active: 1,
+      track_stock: value.track_stock ? 1 : 0,
+    };
+
+    if (dto.track_stock === 1) dto.stock = value.stock;
+
+    await api.post("/products", dto);
+    await Swal.fire("Listo", "Producto guardado", "success");
+    load();
+  } catch (e) {
+    Swal.fire("Error", e?.response?.data?.message || "No se pudo crear", "error");
+  }
+};
+
+const removeProduct = async (p) => {
+  const confirm = await Swal.fire({
+    title: "Eliminar producto",
+    text: `Se desactivará: ${p.name}`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Eliminar",
+    cancelButtonText: "Cancelar",
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  try {
+    await api.delete(`/products/${p.id}`);
+    await Swal.fire("Listo", "Producto eliminado", "success");
+    load();
+  } catch (e) {
+    Swal.fire("Error", e?.response?.data?.message || "No se pudo eliminar", "error");
+  }
+};
+
+
+const reactivateProduct = async (p) => {
+  const confirm = await Swal.fire({
+    title: "Reactivar producto",
+    text: `Se reactivará: ${p.name}`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Reactivar",
+    cancelButtonText: "Cancelar",
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  try {
+    await api.patch(`/products/${p.id}/reactivate`);
+    await Swal.fire("Listo", "Producto reactivado", "success");
+    load();
+  } catch (e) {
+    Swal.fire("Error", e?.response?.data?.message || "No se pudo reactivar", "error");
+  }
+};
+
 
   const openEdit = async (p) => {
     const track = Number(p.track_stock) === 1;
@@ -117,6 +224,13 @@ export default function Inventory() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+              <button
+    onClick={openCreate}
+    className="px-3 py-2 rounded-xl bg-black text-white hover:opacity-90"
+  >
+    Nuevo producto
+  </button>
+
             <button
               onClick={load}
               className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
@@ -150,7 +264,8 @@ export default function Inventory() {
                   <th className="p-3 border-b">Precio</th>
                   <th className="p-3 border-b">Track</th>
                   <th className="p-3 border-b">Stock</th>
-                  <th className="p-3 border-b"></th>
+                  <th className="p-3 border-b text-center">Acciones</th>
+                  <th className="p-3 border-b">Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -159,7 +274,7 @@ export default function Inventory() {
                   const out = track && Number(p.stock) <= 0;
 
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50">
+                    <tr key={p.id}   className={`hover:bg-gray-50 ${p.is_active === 0 ? "bg-red-50 text-red-700" : ""}`}>
                       <td className="p-3 border-b">{p.id}</td>
                       <td className="p-3 border-b">{p.name}</td>
                       <td className="p-3 border-b">${Number(p.price).toFixed(2)}</td>
@@ -167,20 +282,43 @@ export default function Inventory() {
                       <td className={`p-3 border-b ${out ? "text-red-600 font-medium" : ""}`}>
                         {track ? p.stock : "—"}
                       </td>
-                      <td className="p-3 border-b text-right">
+                    <td className="p-3 border-b align-middle">
+                    <div className="flex items-center justify-center gap-2">
+                        {p.is_active === 1 ? (
+                        <>
+                            <button
+                            onClick={() => openEdit(p)}
+                            className="px-3 py-2 rounded-xl border hover:bg-gray-100"
+                            >
+                            Editar
+                            </button>
+                            <button
+                            onClick={() => removeProduct(p)}
+                            className="px-3 py-2 rounded-xl border text-red-600 hover:bg-gray-100"
+                            >
+                            Eliminar
+                            </button>
+                        </>
+                        ) : (
                         <button
-                          onClick={() => openEdit(p)}
-                          className="px-3 py-2 rounded-xl border hover:bg-gray-100"
+                            onClick={() => reactivateProduct(p)}
+                            className="px-3 py-2 rounded-xl border text-green-700 hover:bg-gray-100"
                         >
-                          Editar
+                            Reactivar
                         </button>
-                      </td>
+                        )}
+                    </div>
+                    </td>
+                    <td className="p-3 border-b font-medium">
+                    {p.is_active === 1 ? "Activo" : "Inactivo"}
+                    </td>
+
                     </tr>
                   );
                 })}
                 {!filtered.length && (
                   <tr>
-                    <td className="p-4 text-gray-600" colSpan={6}>
+                    <td className="p-4 text-gray-600" colSpan={7}>
                       Sin resultados
                     </td>
                   </tr>
