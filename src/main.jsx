@@ -7,6 +7,7 @@ import Pos from "./pages/Pos";
 import ProtectedRoute from "./ProtectedRoute";
 import Inventory from "./pages/Inventory";
 import RoleRoute from "./RoleRoute";
+import Reports from "./pages/Reports";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -27,6 +28,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   element={
     <RoleRoute allow={["manager", "admin"]}>
       <Inventory />
+    </RoleRoute>
+  }
+/>
+<Route
+  path="/reports"
+  element={
+    <RoleRoute allow={["manager", "admin"]}>
+      <Reports />
     </RoleRoute>
   }
 />

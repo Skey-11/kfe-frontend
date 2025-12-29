@@ -153,6 +153,14 @@ export default function Pos() {
       Inventario
     </button>
   )}
+                {user?.roles?.some((r) => ["manager", "admin"].includes(r)) && (
+    <button
+      onClick={() => nav("/reports")}
+      className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
+    >
+      Reportes
+    </button>
+  )}
             <button
               onClick={loadProducts}
               className="px-3 py-2 rounded-xl border bg-white hover:bg-gray-100"
