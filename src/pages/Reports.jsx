@@ -44,8 +44,8 @@ export default function Reports() {
       };
 
   const run = async () => {
-    if (!from || !to) return Swal.fire("Error", "Selecciona from y to", "warning");
-    if (from > to) return Swal.fire("Error", "from no puede ser mayor que to", "warning");
+    if (!from || !to) return Swal.fire("Error", "Selecciona fecha inicial y fecha final", "warning");
+    if (from > to) return Swal.fire("Error", "La fecha inicial no puede ser mayor que la final", "warning");
 
     try {
       setLoading(true);
